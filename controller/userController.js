@@ -52,7 +52,8 @@ const register = async (req, res) => {
         res.cookie('token', token, {
             expires: new Date(Date.now() + 3600000)
         }).status(200).json({
-            id: createUser._id
+            userId: createUser._id,
+            userName: createUser.userName
         })
 
     } catch (err) {
@@ -92,7 +93,8 @@ const login = async (req, res) => {
                 res.status(200).cookie('token', token, {
                     expires: new Date(Date.now() + 3600000)
                 }).json({
-                    id: findUser._id
+                    userId: findUser._id,
+                    userName: findUser.userName
                 });
             } else {
                 res.status(401).json({
@@ -112,37 +114,38 @@ const login = async (req, res) => {
 
 const profile = async (req, res) => {
     try {
-
-        if (req.cookies && req.cookies.token) {
-            const token = req.cookies.token;
-            jwt.verify(token, jwtSecret, {}, async (err, userData) => {
-                if (err) {
-                    res.status(401).json({
-                        message: "Unauthorised"
-                    })
-                }
-                const userName = userData.userName;
-                const findUser = await User.findOne({
-                    userName
-                });
-                const resUser = {
-                    id: findUser._id,
-                    firstName: findUser.firstName,
-                    lastName: findUser.lastName,
-                    userName: findUser.userName
-                }
-                res.status(200).json(resUser)
-            })
-        } else {
-
-            res.status(401).json({
-                message: "Unauthorised"
-            })
+        const userName = req.user.userName;
+        const findUser = await User.findOne({
+            userName
+        });
+        const resUser = {
+            userId: findUser._id,
+            firstName: findUser.firstName,
+            lastName: findUser.lastName,
+            userName: findUser.userName
         }
+        res.status(200).json(resUser)
+
     } catch (err) {
         res.status(401).json(err)
     }
 
+}
+
+const miniProfile = async (req, res) => {
+    try {
+        const userName = req.user.userName;
+        const userId = req.user.userId;
+
+        const resUser = {
+            userId,
+            userName
+        }
+        res.status(200).json(resUser)
+
+    } catch (err) {
+        res.status(401).json(err)
+    }
 }
 
 const logout = async (req, res) => {
@@ -155,5 +158,6 @@ module.exports = {
     register,
     login,
     profile,
+    miniProfile,
     logout
 }
